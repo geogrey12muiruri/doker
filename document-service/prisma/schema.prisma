@@ -1,0 +1,88 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Represents a policy document
+model Document {
+  id            Int            @id @default(autoincrement())
+  title         String
+  version       String
+  revision      String
+  content       String?        // Optional: For template-based content (text/html)
+  filePath      String?        // Optional: For uploaded files (path to PDF)
+  status        DocumentStatus @default(DRAFT)
+  institutionId String
+  institution   Institution    @relation(fields: [institutionId], references: [id])
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  createdById   Int
+  createdBy     User           @relation(fields: [createdById], references: [id], name: "DocumentCreator")
+  changes       Change[]
+  category      String?        // e.g., "Academic", "Student Affairs"
+}
+
+// Represents a proposed change to a document
+model Change {
+  id             Int          @id @default(autoincrement())
+  documentId     Int
+  document       Document     @relation(fields: [documentId], references: [id])
+  clause         String
+  proposedChange String
+  justification  String
+  status         ChangeStatus
+  proposerId     Int
+  proposer       User         @relation(fields: [proposerId], references: [id], name: "Proposer")
+  hodId          Int?
+  hod            User?        @relation(fields: [hodId], references: [id], name: "Hod")
+  implementorId  Int?
+  implementor    User?        @relation(fields: [implementorId], references: [id], name: "Implementor")
+  rejectionReason String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+// User model
+model User {
+  id                 Int        @id @default(autoincrement())
+  username           String     @unique
+  email              String     @unique
+  role               Role
+  institutionId      String
+  institution        Institution @relation(fields: [institutionId], references: [id])
+  createdDocuments   Document[] @relation(name: "DocumentCreator")
+  proposedChanges    Change[]   @relation(name: "Proposer")
+  hodChanges         Change[]   @relation(name: "Hod")
+  implementedChanges Change[]   @relation(name: "Implementor")
+}
+
+// Institution (university)
+model Institution {
+  id        String     @id
+  name      String
+  documents Document[] // Opposite field `institution` in Document
+  users     User[]     // Opposite field `institution` in User
+}
+
+enum DocumentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ChangeStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  IMPLEMENTED
+}
+
+enum Role {
+  STAFF
+  HOD
+  IMPLEMENTOR
+}

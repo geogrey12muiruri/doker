@@ -1,0 +1,16 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model RevisionRequest {
+  id            Int      @id @default(autoincrement())
+  documentId    Int
+  userId        Int
+  sectionIndex  Int
+  currentClause String
+  proposedClause String
+  justification String
+  status        String
+  institutionId String
+}

@@ -12,7 +12,7 @@ export function AuthProvider({ children }) {
     const storedToken = localStorage.getItem('token');
     if (storedToken) {
       // Optionally verify token with auth-service
-      fetch('http://localhost:8080/auth/me', {
+      fetch('http://localhost:3003/api/v1/me', {
         headers: { Authorization: `Bearer ${storedToken}` },
       })
         .then(res => res.json())

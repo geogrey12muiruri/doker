@@ -59,6 +59,28 @@ app.post("/api/v1/validate", (req, res) => {
   }
 });
 
+// Middleware to verify JWT and extract user info
+const authMiddleware = (req, res, next) => {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) return res.status(401).json({ error: "No token provided" });
+  try {
+    req.user = jwt.verify(token, JWT_SECRET);
+    next();
+  } catch (err) {
+    res.status(401).json({ error: "Invalid token" });
+  }
+};
+
+// Get current user
+app.get("/api/v1/me", authMiddleware, async (req, res) => {
+  const user = await prisma.user.findUnique({
+    where: { id: req.user.id },
+    select: { id: true, username: true, role: true, institutionId: true },
+  });
+  if (!user) return res.status(404).json({ error: "User not found" });
+  res.json({ user });
+});
+
 // Get User by ID (for other services)
 app.get("/api/v1/users/:id", async (req, res) => {
   const { id } = req.params;

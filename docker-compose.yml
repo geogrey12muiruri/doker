@@ -1,3 +1,4 @@
+version: '3'
 services:
   frontend:
     build: "./frontend-nextjs"
@@ -41,8 +42,10 @@ services:
       - DATABASE_URL=postgresql://admin:secret@auth-db:5432/auth_db?schema=public
       - EMAIL_USER=your-email@gmail.com
       - EMAIL_PASS=your-app-password
+      - KAFKA_BROKER=kafka:9092  # Add Kafka connection
     depends_on:
       - auth-db
+      - kafka
 
   document-service:
     build: "./document-service"
@@ -53,9 +56,13 @@ services:
       - DATABASE_URL=postgresql://admin:secret@document-db:5432/document_db
       - AUTH_SERVICE_URL=http://auth-service:3003
       - JWT_SECRET=your-secret-key-here
+      - KAFKA_BROKER=kafka:9092  # Add Kafka connection
     depends_on:
       - document-db
       - auth-service
+      - kafka
+    volumes:
+      - document-uploads:/src/uploads
 
   nginx:
     image: nginx:latest
@@ -101,7 +108,27 @@ services:
     ports:
       - "5436:5432"
 
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
 volumes:
   backend1-db-data:
   auth-db-data:
   document-db-data:
+  document-uploads:

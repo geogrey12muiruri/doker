@@ -1,10 +1,12 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import Link from 'next/link';
-import { Document, Page, pdfjs } from 'react-pdf';
+import { pdfjs } from 'react-pdf';
 
-// Set the worker source to the static file in public/assets
-pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 export default function Documents() {
   const { user, token } = useAuth();
@@ -18,9 +20,9 @@ export default function Documents() {
   const [numPages, setNumPages] = useState(null);
   const [proposeForm, setProposeForm] = useState({ clause: '', proposedChange: '', justification: '' }); // Form state
 
-  useEffect(() => {
+   useEffect(() => {
     if (!user || !token) return;
-
+  
     const fetchDocuments = async () => {
       try {
         const res = await fetch('http://localhost:3004/api/v1/documents', {
@@ -35,7 +37,7 @@ export default function Documents() {
         setLoading(false);
       }
     };
-
+  
     fetchDocuments();
   }, [user, token]);
 
